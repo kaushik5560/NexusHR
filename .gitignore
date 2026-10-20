@@ -1,0 +1,23 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# Backend (Java/Maven)
+**/target/
+**/.mvn/wrapper/maven-wrapper.jar
+**/*.class
+
+# Frontend (Node/React)
+**/node_modules/
+**/dist/
+**/build/
+.env
+.env.local
+
+# Logs
+*.log
