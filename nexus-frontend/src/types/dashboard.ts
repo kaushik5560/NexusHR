@@ -80,3 +80,28 @@ export interface LeaveRecord {
   reviewedBy?: string;
   reviewedByName?: string;
 }
+
+export interface AttritionRisk {
+  employeeId: number;
+  employeeCode: string;
+  employeeName: string;
+  department: string;
+  designation: string;
+  riskScore: number;
+  riskLevel: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL' | string;
+  confidenceScore: number;
+  flightRiskWindow: string;
+  primaryRiskFactors: string[];
+  aiDiagnosis: string;
+  retentionActions: string[];
+}
+
+export interface WorkforceAiOverview {
+  totalEmployeesAnalyzed: number;
+  lowRiskCount: number;
+  moderateRiskCount: number;
+  highRiskCount: number;
+  criticalRiskCount: number;
+  companyAverageRiskScore: number;
+  highRiskEmployees: AttritionRisk[];
+}

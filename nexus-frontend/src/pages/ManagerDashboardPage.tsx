@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
-import type { EmployeeProfile, LeaveRecord } from '../types/dashboard';
+import type { EmployeeProfile, LeaveRecord, WorkforceAiOverview } from '../types/dashboard';
 import {
   Users,
   CheckCircle2,
@@ -11,10 +11,11 @@ import {
   Calendar,
   DollarSign,
   ArrowLeft,
-  AlertCircle,
+  AlertTriangle,
   Briefcase,
   ShieldCheck,
   Sparkles,
+  Lightbulb,
 } from 'lucide-react';
 
 export default function ManagerDashboardPage() {
@@ -23,21 +24,25 @@ export default function ManagerDashboardPage() {
 
   const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
   const [pendingLeaves, setPendingLeaves] = useState<LeaveRecord[]>([]);
+  const [aiOverview, setAiOverview] = useState<WorkforceAiOverview | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  // Remarks modal/inline state
+  // Remarks state for leaves
   const [remarks, setRemarks] = useState<{ [key: number]: string }>({});
 
   const loadManagerData = async () => {
     try {
-      const [empRes, leaveRes] = await Promise.allSettled([
+      const [empRes, leaveRes, aiRes] = await Promise.allSettled([
         apiClient.get('/employees'),
         apiClient.get('/leaves/pending'),
+        apiClient.get('/ai/attrition/overview'),
       ]);
 
       if (empRes.status === 'fulfilled') setEmployees(empRes.value.data);
       if (leaveRes.status === 'fulfilled') setPendingLeaves(leaveRes.value.data);
+      if (aiRes.status === 'fulfilled') setAiOverview(aiRes.value.data);
     } catch (err) {
       console.error('Failed to load manager data', err);
     }
@@ -59,7 +64,6 @@ export default function ManagerDashboardPage() {
       });
 
       setMessage(`Leave request #${leaveId} has been successfully ${status}!`);
-      // Refresh pending leaves list
       const leaveRes = await apiClient.get('/leaves/pending');
       setPendingLeaves(leaveRes.data);
     } catch (err: any) {
@@ -111,7 +115,7 @@ export default function ManagerDashboardPage() {
               Managerial Overview Console
             </h1>
             <p className="text-slate-300 text-sm mt-1">
-              Active Administrator: <span className="font-semibold text-white">{user?.firstName} {user?.lastName}</span> ({user?.roles.join(', ')})
+              Active Administrator: <span className="font-semibold text-white">{user?.firstName} {user?.lastName}</span> ({user?.roles?.join(', ') || 'ROLE_HR'})
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -166,6 +170,86 @@ export default function ManagerDashboardPage() {
           </div>
         </div>
 
+        {/* AI WORKFORCE FLIGHT RISK RADAR CARD */}
+        {aiOverview && (
+          <div className="bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl mb-8 border border-indigo-700/50">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-800/60 pb-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  <Sparkles className="w-6 h-6 text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-lg tracking-tight">NexusAI Workforce Flight Risk & Attrition Radar</h3>
+                  <p className="text-xs text-indigo-200">Correlating Biometrics, Leave Requests, and 360° Scorecards</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="px-3.5 py-1.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 text-xs">
+                  <span className="text-indigo-200">Company Risk Avg:</span>{' '}
+                  <span className="font-bold text-amber-300 font-mono">{aiOverview.companyAverageRiskScore}%</span>
+                </div>
+                <div className="px-3.5 py-1.5 rounded-xl bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-bold">
+                  {aiOverview.highRiskCount} High Risk Alert
+                </div>
+              </div>
+            </div>
+
+            {/* High Risk Employees Cards */}
+            {aiOverview.highRiskEmployees.length === 0 ? (
+              <p className="text-xs text-indigo-200 py-3 text-center">Zero high attrition risk alerts detected across the workforce.</p>
+            ) : (
+              <div className="space-y-4">
+                {aiOverview.highRiskEmployees.map((risk) => (
+                  <div key={risk.employeeId} className="bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-md">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-3 border-b border-white/10 pb-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 text-amber-400" />
+                          <span className="font-bold text-base text-white">{risk.employeeName}</span>
+                          <span className="font-mono text-xs text-indigo-300">({risk.employeeCode})</span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-red-500/30 text-red-300 border border-red-500/40">
+                            {risk.riskLevel} RISK ({risk.riskScore}%)
+                          </span>
+                        </div>
+                        <p className="text-xs text-indigo-200 mt-0.5">{risk.designation} • {risk.department}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          {risk.flightRiskWindow}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs mt-3">
+                      {/* Identified Triggers */}
+                      <div className="bg-black/20 p-3.5 rounded-xl border border-white/5 space-y-1.5">
+                        <span className="font-bold text-indigo-300 uppercase tracking-wider text-[11px]">Primary Risk Drivers Identified:</span>
+                        <ul className="space-y-1 mt-1 text-slate-300 list-disc list-inside">
+                          {risk.primaryRiskFactors.map((factor, i) => (
+                            <li key={i}>{factor}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* AI Retention Recommendations */}
+                      <div className="bg-emerald-950/40 p-3.5 rounded-xl border border-emerald-500/20 space-y-1.5">
+                        <span className="font-bold text-emerald-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                          <Lightbulb className="w-3.5 h-3.5 text-emerald-400" /> AI Retention Action Plan:
+                        </span>
+                        <ul className="space-y-1 mt-1 text-emerald-100 list-disc list-inside">
+                          {risk.retentionActions.map((action, i) => (
+                            <li key={i}>{action}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* SECTION 1: PENDING LEAVE APPROVALS QUEUE */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8">
           <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
@@ -192,7 +276,7 @@ export default function ManagerDashboardPage() {
                       <span className="font-bold text-slate-900 text-sm">{leave.employeeName}</span>
                       <span className="font-mono text-slate-500">({leave.employeeCode})</span>
                       <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold text-[10px]">
-                        {leave.leaveType} ({leave.totalDays} Days)
+                        {leave.leaveType} ({leave.totalDays || leave.durationDays || 1} Days)
                       </span>
                     </div>
                     <p className="text-slate-600">Period: <span className="font-medium text-slate-900">{leave.startDate} to {leave.endDate}</span></p>
@@ -271,7 +355,7 @@ export default function ManagerDashboardPage() {
                     </td>
                     <td className="py-3.5 px-4">
                       <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700">
-                        {emp.roles.join(', ')}
+                        {emp.roles?.join(', ') || 'ROLE_EMPLOYEE'}
                       </span>
                     </td>
                   </tr>
