@@ -4,67 +4,79 @@ export interface EmployeeProfile {
   firstName: string;
   lastName: string;
   email: string;
-  phoneNumber?: string;
+  phone?: string;
   department: string;
   designation: string;
-  salary: number;
   status: string;
-  hireDate: string;
+  joiningDate?: string;
+  hireDate?: string;
   roles: string[];
+  salary?: number;
 }
 
 export interface AttendanceRecord {
   id: number;
   date: string;
-  checkInTime: string | null;
-  checkOutTime: string | null;
-  workHours: number | null;
+  checkInTime?: string;
+  checkOutTime?: string;
+  durationHours?: number;
+  workHours?: number;
   status: string;
   notes?: string;
 }
 
 export interface PayslipRecord {
   id: number;
+  payslipReference: string;
   month: number;
   year: number;
   basicSalary: number;
   hra: number;
-  specialAllowance: number;
+  allowances: number;
+  specialAllowance: number;      // Fixed: NOT optional to allow .toLocaleString()
   grossSalary: number;
-  pfDeduction: number;
-  taxDeduction: number;
+  providentFund: number;
+  pfDeduction: number;           // Fixed: NOT optional to allow .toLocaleString()
+  professionalTax: number;
+  taxDeduction: number;          // Fixed: NOT optional to allow .toLocaleString()
   totalDeductions: number;
   netSalary: number;
-  status: string;
-  paymentDate: string;
-  payslipReference: string;
+  paymentStatus: string;
+  status: string;                // Fixed: NOT optional
+  paymentDate?: string;
 }
 
 export interface ReviewRecord {
   id: number;
-  reviewerName: string;
   reviewPeriod: string;
+  reviewerName: string;
   technicalSkillsRating: number;
   communicationRating: number;
   productivityRating: number;
   leadershipRating: number;
   overallScore: number;
-  keyAchievements: string;
-  areasOfImprovement: string;
-  managerFeedback: string;
+  keyAchievements?: string;
+  areasOfImprovement?: string;
+  managerFeedback?: string;
   status: string;
-  createdAt: string;
 }
 
 export interface LeaveRecord {
   id: number;
+  employeeId?: number;
+  employeeCode?: string;
+  employeeName?: string;
   leaveType: string;
   startDate: string;
   endDate: string;
-  totalDays: number;
+  durationDays: number;
+  totalDays: number;             // Fixed: NOT optional
   reason: string;
   status: string;
-  reviewedByName?: string;
+  managerComment?: string;
   managerRemarks?: string;
-  appliedAt: string;
+  appliedAt?: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  reviewedByName?: string;
 }
