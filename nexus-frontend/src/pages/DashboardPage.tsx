@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
 import type {
@@ -16,16 +17,14 @@ import {
   DollarSign,
   Star,
   CheckCircle2,
-  AlertCircle,
   FileText,
-  Send,
-  Building,
   Briefcase,
   Sparkles,
 } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   // State Management
   const [profile, setProfile] = useState<EmployeeProfile | null>(null);
@@ -134,7 +133,7 @@ export default function DashboardPage() {
               Nexus<span className="text-blue-600">HR</span>
             </span>
             <span className="ml-2 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-              Day 12: Employee Portal
+              Employee Portal
             </span>
           </div>
 
@@ -143,6 +142,18 @@ export default function DashboardPage() {
               <p className="text-sm font-semibold text-slate-900">{user?.firstName} {user?.lastName}</p>
               <p className="text-xs text-slate-500 font-mono">{user?.employeeCode} • {profile?.department || 'Engineering'}</p>
             </div>
+
+            {/* Manager / HR Portal Switch Button (Sirf HR/Manager roles ko dikhega) */}
+            {(user?.roles?.includes('ROLE_HR') || user?.roles?.includes('ROLE_MANAGER') || user?.roles?.includes('ROLE_ADMIN')) && (
+              <button
+                onClick={() => navigate('/manager-dashboard')}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors border border-indigo-200"
+              >
+                <Briefcase className="w-4 h-4" />
+                <span>Manager Portal</span>
+              </button>
+            )}
+
             <button
               onClick={logout}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-red-100"
@@ -373,7 +384,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="p-3.5 bg-slate-50 rounded-xl">
                   <span className="text-slate-400">Onboarding Date</span>
-                  <p className="font-bold text-slate-900 text-sm mt-0.5">{profile?.hireDate || '2026-10-23'}</p>
+                  <p className="font-bold text-slate-900 text-sm mt-0.5">{profile?.hireDate || profile?.joiningDate || '2026-10-23'}</p>
                 </div>
               </div>
             </div>
@@ -618,7 +629,7 @@ export default function DashboardPage() {
                   {leaves.map((l) => (
                     <div key={l.id} className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1.5">
                       <div className="flex justify-between items-center">
-                        <span className="font-bold text-slate-900">{l.leaveType} LEAVE ({l.totalDays} Days)</span>
+                        <span className="font-bold text-slate-900">{l.leaveType} LEAVE ({l.totalDays || l.durationDays || 1} Days)</span>
                         <span className={`px-2.5 py-0.5 rounded-full font-bold ${
                           l.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' :
                           l.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
@@ -630,7 +641,7 @@ export default function DashboardPage() {
                       <p className="text-slate-600">Reason: {l.reason}</p>
                       {l.reviewedByName && (
                         <div className="pt-1.5 border-t border-slate-200 text-slate-500">
-                          Reviewed by <span className="font-semibold text-slate-700">{l.reviewedByName}</span>: "{l.managerRemarks}"
+                          Reviewed by <span className="font-semibold text-slate-700">{l.reviewedByName}</span>: "{l.managerRemarks || l.managerComment}"
                         </div>
                       )}
                     </div>
