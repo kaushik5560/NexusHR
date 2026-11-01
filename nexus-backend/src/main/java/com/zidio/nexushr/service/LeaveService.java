@@ -23,6 +23,7 @@ public class LeaveService {
 
     private final LeaveRepository leaveRepository;
     private final EmployeeRepository employeeRepository;
+    private final NotificationService notificationService;
 
     // 1. Employee Applies for Leave
     @Transactional
@@ -48,6 +49,17 @@ public class LeaveService {
                 .build();
 
         LeaveRequest saved = leaveRepository.save(leaveRequest);
+
+        // Real-Time Notification to HR Lead (Priya)
+        try {
+            notificationService.createNotification(
+                    "priya@nexus.com",
+                    "New Leave Application Received",
+                    employee.getFirstName() + " " + employee.getLastName() + " requested " + totalDays + " days of " + request.getLeaveType() + " leave.",
+                    "LEAVE_APPLY"
+            );
+        } catch (Exception ignored) {}
+
         return LeaveResponse.fromEntity(saved);
     }
 
@@ -97,6 +109,17 @@ public class LeaveService {
         leave.setReviewedAt(LocalDateTime.now());
 
         LeaveRequest updated = leaveRepository.save(leave);
+
+        // Real-Time Notification to Applicant Employee
+        try {
+            notificationService.createNotification(
+                    leave.getEmployee().getEmail(),
+                    "Leave Request " + action.getStatus(),
+                    "Your leave application for " + leave.getTotalDays() + " days was " + action.getStatus().name().toLowerCase() + " by " + reviewer.getFirstName() + " " + reviewer.getLastName() + ".",
+                    "LEAVE_ACTION"
+            );
+        } catch (Exception ignored) {}
+
         return LeaveResponse.fromEntity(updated);
     }
 }

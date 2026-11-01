@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
+import NotificationDropdown from '../components/NotificationDropdown';
+import ThemeToggle from '../components/ThemeToggle';
 import type {
   EmployeeProfile,
   AttendanceRecord,
   PayslipRecord,
   ReviewRecord,
   LeaveRecord,
+  SkillGapAnalysis,
 } from '../types/dashboard';
 import {
   Users,
@@ -20,6 +23,11 @@ import {
   FileText,
   Briefcase,
   Sparkles,
+  TrendingUp,
+  Award,
+  Check,
+  AlertCircle,
+  Lightbulb,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -32,7 +40,8 @@ export default function DashboardPage() {
   const [payslips, setPayslips] = useState<PayslipRecord[]>([]);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
   const [leaves, setLeaves] = useState<LeaveRecord[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'payroll' | 'performance' | 'leaves'>('overview');
+  const [pathway, setPathway] = useState<SkillGapAnalysis | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'payroll' | 'performance' | 'leaves' | 'career'>('overview');
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -48,12 +57,13 @@ export default function DashboardPage() {
   // Fetch all employee workforce data in parallel from Spring Boot Backend
   const loadDashboardData = async () => {
     try {
-      const [profileRes, attRes, payRes, revRes, leaveRes] = await Promise.allSettled([
+      const [profileRes, attRes, payRes, revRes, leaveRes, pathRes] = await Promise.allSettled([
         apiClient.get('/employees/me'),
         apiClient.get('/attendance/today'),
         apiClient.get('/payroll/my-payslips'),
         apiClient.get('/reviews/my-reviews'),
         apiClient.get('/leaves/my-leaves'),
+        apiClient.get('/ai/skills/my-pathway'),
       ]);
 
       if (profileRes.status === 'fulfilled') setProfile(profileRes.value.data);
@@ -61,6 +71,7 @@ export default function DashboardPage() {
       if (payRes.status === 'fulfilled') setPayslips(payRes.value.data);
       if (revRes.status === 'fulfilled') setReviews(revRes.value.data);
       if (leaveRes.status === 'fulfilled') setLeaves(leaveRes.value.data);
+      if (pathRes.status === 'fulfilled') setPathway(pathRes.value.data);
     } catch (err) {
       console.error('Failed to load dashboard data', err);
     }
@@ -121,33 +132,39 @@ export default function DashboardPage() {
   const latestReview = reviews[0];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-200">
       {/* Top Navbar */}
-      <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
+      <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-blue-600 text-white p-2 rounded-xl shadow-md shadow-blue-500/20">
               <Users className="w-5 h-5" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-slate-900">
+            <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
               Nexus<span className="text-blue-600">HR</span>
             </span>
-            <span className="ml-2 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+            <span className="ml-2 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
               Employee Portal
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-semibold text-slate-900">{user?.firstName} {user?.lastName}</p>
-              <p className="text-xs text-slate-500 font-mono">{user?.employeeCode} • {profile?.department || 'Engineering'}</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">{user?.firstName} {user?.lastName}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">{user?.employeeCode} • {profile?.department || 'Engineering'}</p>
             </div>
 
-            {/* Manager / HR Portal Switch Button (Sirf HR/Manager roles ko dikhega) */}
+            {/* Dark / Light Mode Toggle */}
+            <ThemeToggle />
+
+            {/* Real-time Notifications Bell */}
+            <NotificationDropdown />
+
+            {/* Manager / HR Portal Switch Button */}
             {(user?.roles?.includes('ROLE_HR') || user?.roles?.includes('ROLE_MANAGER') || user?.roles?.includes('ROLE_ADMIN')) && (
               <button
                 onClick={() => navigate('/manager-dashboard')}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors border border-indigo-200"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 rounded-xl transition-colors border border-indigo-200 dark:border-indigo-800"
               >
                 <Briefcase className="w-4 h-4" />
                 <span>Manager Portal</span>
@@ -156,7 +173,7 @@ export default function DashboardPage() {
 
             <button
               onClick={logout}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-red-100"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-xl transition-colors border border-red-100 dark:border-red-900"
             >
               <LogOut className="w-4 h-4" />
               <span>Sign Out</span>
@@ -285,6 +302,7 @@ export default function DashboardPage() {
             { id: 'payroll', label: 'My Payslips', icon: DollarSign },
             { id: 'performance', label: 'Performance Scorecard', icon: Star },
             { id: 'leaves', label: 'Leave Portal', icon: Calendar },
+            { id: 'career', label: 'AI Career & Skill Radar', icon: Sparkles },
           ].map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -648,6 +666,130 @@ export default function DashboardPage() {
                   ))}
                 </div>
               )}
+            </div>
+
+          </div>
+        )}
+
+        {/* TAB 5: AI CAREER & SKILL RADAR */}
+        {activeTab === 'career' && (
+          <div className="space-y-6">
+            {/* Header Card */}
+            <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 text-white rounded-3xl p-8 border border-indigo-700/40 shadow-xl">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-indigo-800/60">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/30 text-indigo-200 text-xs font-semibold backdrop-blur-md mb-2">
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> NexusAI Career Progression Engine
+                  </div>
+                  <h2 className="text-2xl font-extrabold tracking-tight">AI Talent Intelligence & Career Pathway</h2>
+                  <p className="text-indigo-200 text-xs mt-1">
+                    Current Placement: <span className="text-white font-semibold">{pathway?.currentRole || profile?.designation}</span> ➔ Target Next Horizon: <span className="text-amber-300 font-bold">{pathway?.targetRole}</span>
+                  </p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/15 text-center">
+                  <span className="text-[11px] text-indigo-300 uppercase tracking-wider block font-semibold">Promotion Readiness</span>
+                  <span className="text-3xl font-extrabold text-emerald-400 font-mono">{pathway?.readinessScore || 82.5}%</span>
+                  <span className="text-[10px] text-emerald-200 block mt-0.5 font-medium">{pathway?.readinessLevel}</span>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="mb-6">
+                <div className="flex justify-between text-xs font-semibold text-indigo-200 mb-2">
+                  <span>Talent Calibration to Target Horizon</span>
+                  <span className="text-emerald-400">{pathway?.readinessScore}% Competency Met</span>
+                </div>
+                <div className="w-full bg-white/10 h-3 rounded-full overflow-hidden p-0.5 border border-white/15">
+                  <div
+                    className="bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-700"
+                    style={{ width: `${pathway?.readinessScore || 80}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* AI Career Advice Box */}
+              <div className="p-4 bg-indigo-900/40 border border-indigo-500/30 rounded-2xl text-xs flex items-start gap-3">
+                <Lightbulb className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-amber-300 uppercase tracking-wider text-[11px] block">AI Career Guidance Diagnostic:</span>
+                  <p className="text-indigo-100 mt-1 leading-relaxed">{pathway?.aiCareerAdvice}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Skills Breakdown Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Verified Competencies */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <Award className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900">Verified Technical Competencies</h3>
+                    <p className="text-xs text-slate-400">Validated through project delivery & 360° reviews</p>
+                  </div>
+                </div>
+                <div className="space-y-2.5">
+                  {pathway?.verifiedSkills.map((skill, index) => (
+                    <div key={index} className="flex items-center gap-2.5 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
+                        <Check className="w-3 h-3" />
+                      </div>
+                      <span className="font-semibold text-slate-800">{skill}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Identified Skill Gaps */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <TrendingUp className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900">Identified Skill Gaps (Growth Area)</h3>
+                    <p className="text-xs text-slate-400">Target skills required for the next promotion tier</p>
+                  </div>
+                </div>
+                <div className="space-y-2.5">
+                  {pathway?.identifiedSkillGaps.map((skill, index) => (
+                    <div key={index} className="flex items-center gap-2.5 p-2.5 bg-amber-50/50 border border-amber-200/60 rounded-xl text-xs">
+                      <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0 font-bold text-[10px]">
+                        !
+                      </div>
+                      <span className="font-semibold text-slate-800">{skill}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            {/* 90-Day AI Learning Roadmap */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+              <h3 className="font-bold text-slate-900 flex items-center gap-2 mb-4">
+                <TrendingUp className="w-5 h-5 text-indigo-600" /> 90-Day Step-by-Step AI Upskilling & Transition Roadmap
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {pathway?.learningPath.map((milestone, index) => (
+                  <div key={index} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col justify-between">
+                    <div>
+                      <span className="px-2.5 py-1 bg-indigo-100 text-indigo-800 rounded-md font-mono text-[10px] font-bold">
+                        {milestone.timeframe}
+                      </span>
+                      <h4 className="font-bold text-slate-900 text-sm mt-3">{milestone.title}</h4>
+                      <p className="text-slate-500 text-xs mt-1"><span className="font-semibold text-slate-700">Focus:</span> {milestone.focusArea}</p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-200">
+                      <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block mb-1">Recommended Action:</span>
+                      <p className="text-xs text-slate-700 italic">"{milestone.recommendedAction}"</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
           </div>

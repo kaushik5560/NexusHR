@@ -33,16 +33,16 @@ export interface PayslipRecord {
   basicSalary: number;
   hra: number;
   allowances: number;
-  specialAllowance: number;      // Fixed: NOT optional to allow .toLocaleString()
+  specialAllowance: number;
   grossSalary: number;
   providentFund: number;
-  pfDeduction: number;           // Fixed: NOT optional to allow .toLocaleString()
+  pfDeduction: number;
   professionalTax: number;
-  taxDeduction: number;          // Fixed: NOT optional to allow .toLocaleString()
+  taxDeduction: number;
   totalDeductions: number;
   netSalary: number;
   paymentStatus: string;
-  status: string;                // Fixed: NOT optional
+  status: string;
   paymentDate?: string;
 }
 
@@ -70,7 +70,7 @@ export interface LeaveRecord {
   startDate: string;
   endDate: string;
   durationDays: number;
-  totalDays: number;             // Fixed: NOT optional
+  totalDays: number;
   reason: string;
   status: string;
   managerComment?: string;
@@ -104,4 +104,58 @@ export interface WorkforceAiOverview {
   criticalRiskCount: number;
   companyAverageRiskScore: number;
   highRiskEmployees: AttritionRisk[];
+}
+
+export interface CareerMilestone {
+  timeframe: string;
+  title: string;
+  focusArea: string;
+  recommendedAction: string;
+}
+
+export interface SkillGapAnalysis {
+  employeeId: number;
+  employeeName: string;
+  currentRole: string;
+  targetRole: string;
+  readinessScore: number;
+  readinessLevel: string;
+  verifiedSkills: string[];
+  identifiedSkillGaps: string[];
+  learningPath: CareerMilestone[];
+  aiCareerAdvice: string;
+}
+
+export interface NotificationItem {
+  id: number;
+  recipientEmail: string;
+  title: string;
+  message: string;
+  type: 'LEAVE_APPLY' | 'LEAVE_ACTION' | 'PAYROLL' | 'REVIEW' | 'AI_ALERT' | 'SYSTEM' | string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface WorkforceAnalytics {
+  totalEmployees: number;
+  monthlyPayrollOutflow: number;
+  averagePerformanceScore: number;
+  retentionHealthScore: number;
+  attendanceComplianceRate: number;
+  departmentHeadcount: { [key: string]: number };
+  attendanceStatusCounts: { [key: string]: number };
+  pendingLeavesCount: number;
+  approvedLeavesCount: number;
+  leaveApprovalRate: number;
+}
+
+export interface DispatchLogItem {
+  id: number;
+  channel: 'EMAIL' | 'SMS' | string;
+  recipient: string;
+  subject: string;
+  content: string;
+  deliveryStatus: 'DELIVERED' | 'QUEUED' | 'FAILED' | string;
+  latencyMs: number;
+  dispatchedAt: string;
 }
