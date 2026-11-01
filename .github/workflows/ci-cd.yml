@@ -1,0 +1,80 @@
+name: NexusHR Enterprise CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "master", "develop" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  # 1. Backend Continuous Integration
+  backend-ci:
+    name: Backend Build & Unit Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 LTS
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Grant Execute Permission for Maven Wrapper
+        run: chmod +x ./nexus-backend/mvnw
+
+      - name: Compile and Run Unit Tests
+        run: |
+          cd nexus-backend
+          ./mvnw clean test
+
+      - name: Verify Backend Docker Build
+        run: |
+          docker build -t nexus-backend:ci-test ./nexus-backend
+
+  # 2. Frontend Continuous Integration
+  frontend-ci:
+    name: Frontend Build & Typecheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: './nexus-frontend/package-lock.json'
+
+      - name: Install NPM Dependencies
+        run: |
+          cd nexus-frontend
+          npm ci
+
+      - name: Production TypeScript & Vite Build
+        run: |
+          cd nexus-frontend
+          npm run build
+
+      - name: Verify Frontend Docker Build
+        run: |
+          docker build -t nexus-frontend:ci-test ./nexus-frontend
+
+  # 3. Full-Stack Docker Compose Orchestration Check
+  orchestration-check:
+    name: Docker Compose Multi-Container Smoke Test
+    needs: [backend-ci, frontend-ci]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Verify Docker Compose Specification
+        run: |
+          docker compose config

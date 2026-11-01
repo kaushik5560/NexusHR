@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus-backend-deployment
+  namespace: nexushr
+  labels:
+    app: nexus-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nexus-backend
+  template:
+    metadata:
+      labels:
+        app: nexus-backend
+    spec:
+      containers:
+        - name: nexus-backend
+          image: nexushr-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: nexushr-config
+          env:
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: nexushr-secrets
+                  key: POSTGRES_USER
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nexushr-secrets
+                  key: POSTGRES_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nexushr-secrets
+                  key: JWT_SECRET
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1536Mi"
+              cpu: "1500m"
+          livenessProbe:
+            httpGet:
+              path: /api/employees
+              port: 8080
+            initialDelaySeconds: 45
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /api/employees
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-backend-service
+  namespace: nexushr
+spec:
+  selector:
+    app: nexus-backend
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
