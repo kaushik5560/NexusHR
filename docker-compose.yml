@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  nexushr-db:
+    image: postgres:17-alpine
+    container_name: nexushr-db
+    restart: always
+    environment:
+      POSTGRES_DB: nexushr_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - nexushr-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nexushr_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nexus-backend:
+    build:
+      context: ./nexus-backend
+      dockerfile: Dockerfile
+    container_name: nexus-backend
+    restart: always
+    depends_on:
+      nexushr-db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://nexushr-db:5432/nexushr_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8080:8080"
+    networks:
+      - nexushr-network
+
+  nexus-frontend:
+    build:
+      context: ./nexus-frontend
+      dockerfile: Dockerfile
+    container_name: nexus-frontend
+    restart: always
+    depends_on:
+      - nexus-backend
+    ports:
+      - "80:80"
+      - "5173:80"
+    networks:
+      - nexushr-network
+
+volumes:
+  postgres_data:
+
+networks:
+  nexushr-network:
+    driver: bridge
