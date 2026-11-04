@@ -1,19 +1,14 @@
 # Stage 1: Build JAR using Maven & JDK 21
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM maven:3.9-eclipse-temurin-21-alpine AS builder
 WORKDIR /app
 
-# Copy Maven wrapper & POM
-COPY mvnw .
-COPY .mvn .mvn
+# Copy POM and download dependencies offline for caching
 COPY pom.xml .
-RUN chmod +x mvnw
+RUN mvn dependency:go-offline -B || true
 
-# Download dependencies offline for caching
-RUN ./mvnw dependency:go-offline -B || true
-
-# Copy source code and build
+# Copy source code and build production package
 COPY src src
-RUN ./mvnw clean package -DskipTests
+RUN mvn clean package -DskipTests
 
 # Stage 2: Production Lightweight JRE 21 Runtime
 FROM eclipse-temurin:21-jre-alpine
