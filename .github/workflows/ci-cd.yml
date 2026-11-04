@@ -1,3 +1,4 @@
+
 name: NexusHR Enterprise CI/CD Pipeline
 
 on:
@@ -7,10 +8,36 @@ on:
     branches: [ "main", "master" ]
 
 jobs:
+
+  
   # 1. Backend Continuous Integration
   backend-ci:
     name: Backend Build & Unit Verification
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: nexushr_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d nexushr_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/nexushr_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/nexushr_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      JWT_SECRET: nexusHrEnterpriseSecretKeyForProductionSecurityWith256BitStrength2026!
 
     steps:
       - name: Checkout Source Code
@@ -34,6 +61,7 @@ jobs:
       - name: Verify Backend Docker Build
         run: |
           docker build -t nexus-backend:ci-test ./nexus-backend
+
 
   # 2. Frontend Continuous Integration
   frontend-ci:
@@ -64,6 +92,7 @@ jobs:
       - name: Verify Frontend Docker Build
         run: |
           docker build -t nexus-frontend:ci-test ./nexus-frontend
+
 
   # 3. Full-Stack Docker Compose Orchestration Check
   orchestration-check:

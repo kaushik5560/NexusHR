@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
 import NotificationDropdown from '../components/NotificationDropdown';
@@ -12,7 +12,6 @@ import type {
   DispatchLogItem,
 } from '../types/dashboard';
 import {
-  Users,
   CheckCircle2,
   XCircle,
   Clock,
@@ -25,7 +24,6 @@ import {
   Sparkles,
   Lightbulb,
   Printer,
-  TrendingUp,
   BarChart3,
   Activity,
   Award,
@@ -37,7 +35,6 @@ import {
 
 export default function ManagerDashboardPage() {
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
   const [pendingLeaves, setPendingLeaves] = useState<LeaveRecord[]>([]);

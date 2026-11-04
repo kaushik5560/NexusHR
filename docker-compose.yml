@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: nexushr_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
     ports:
       - "5432:5432"
     volumes:
@@ -33,8 +33,9 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://nexushr-db:5432/nexushr_db
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-password}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JWT_SECRET: ${JWT_SECRET:-nexusHrEnterpriseSecretKeyForProductionSecurityWith256BitStrength2026!}
     ports:
       - "8080:8080"
     networks:

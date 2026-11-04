@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import apiClient from '../api/client';
 import type { NotificationItem } from '../types/dashboard';
 import {

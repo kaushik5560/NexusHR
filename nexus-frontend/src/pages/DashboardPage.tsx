@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
@@ -26,7 +26,6 @@ import {
   TrendingUp,
   Award,
   Check,
-  AlertCircle,
   Lightbulb,
 } from 'lucide-react';
 

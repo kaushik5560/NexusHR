@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import apiClient from '../api/client';
-import { Users, Mail, Lock, User, Briefcase, Building, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Users, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
